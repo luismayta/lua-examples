@@ -1,0 +1,46 @@
+# lua-examples: Docker Compose
+# https://docs.docker.com/compose/
+#
+# Usage: docker-compose up
+version: '3'
+services:
+
+  # PostgreSQL database
+  db:
+    restart: always
+    image: dgnest/postgres:9.6
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=lua-examples
+    env_file:
+      - .env
+    volumes:
+      - pgvolume-9.6:/var/lib/postgresql/data #using the declared volume
+
+  # Django web server
+  web:
+    hostname: web
+    ports:
+      - "80:8000"
+      - "8080:5000"
+    restart: always
+    image: jimho/lua
+    environment: &environment
+      - DB_URL=postgres://postgres:postgres@db:5432/lua-examples
+      - APPLICATION_DEBUG=True
+      - APPLICATION_PORT=8000
+    build:
+      context: .
+      dockerfile: docker/web/Dockerfile
+    volumes:
+      - .:/app
+    env_file:
+      - .env
+    depends_on:
+      - db
+
+volumes:
+  pgvolume-9.6:
+    external:
+      name: lua-examples-pgvolume-9-6
